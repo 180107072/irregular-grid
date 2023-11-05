@@ -1,7 +1,7 @@
-extends Node
+class_name Face
 
-var idx = null
-var halfEdges
+var idx        = null
+var half_edges = null
 
 
 func _init(_idx = null):
@@ -9,21 +9,22 @@ func _init(_idx = null):
 		idx = _idx
 	else:
 		idx = -1
-		
-	halfEdges = []
-	
+
+	half_edges = []
+
+
 func _into_array(n):
 	var a = []
 	for i in range(0, n):
 		a.append(0)
 	return a
 
-func get_vertices(top, out = null):
+
+func get_vertices(top: Topology, out = null):
 	if out == null:
-		out = _into_array(halfEdges.size())
+		out = _into_array(half_edges.size())
 	var o = []
-	for i in range(0, halfEdges.size()):
-		o.push_back( top.vertices[ top.halfEdges[ halfEdges[ i ] ].vertex ])
-		
-	
+	for i in range(0, half_edges.size()):
+		o.push_back(top.vertices[top.half_edges[half_edges[i]].vertex])
+
 	return o

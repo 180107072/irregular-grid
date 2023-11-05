@@ -1,31 +1,31 @@
-extends Node
+class_name Triangle
 
-var idx = null
-var halfEdges = []
-var face
+var idx        = null
+var half_edges = []
+var face       = null
+
 
 func _init(_idx = null):
 	if _idx != null:
 		idx = _idx
 	else:
 		idx = -1
-		
-	halfEdges = []
+
+	half_edges = []
 	face = -1
-	
-func find_half_edge(top, edge_id):
-	var he
-	
-	for i in halfEdges:
-		he = top.halfEdges[i]
-		
+
+
+func find_half_edge(top: Topology, edge_id: int):
+	for i in half_edges:
+		var he = top.half_edges[i]
+
 		if he.edge == edge_id:
 			return he
-		
+
 	return null
-	
+
+
 func next_half_edge(h_idx):
-	var i = halfEdges.find(h_idx)
-	
-	return halfEdges[(i + 1) % 3]
-	
+	var i = half_edges.find(h_idx)
+
+	return half_edges[(i + 1) % 3]
