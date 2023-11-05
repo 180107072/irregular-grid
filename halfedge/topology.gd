@@ -29,7 +29,7 @@ func dispose():
 	faces.clear()
 
 func add_vertex(pos: Vector3):
-	var vec = Vector3(pos.x * 100000, pos.y * 100000,pos.z * 100000)
+	var vec = Vector3(floor(pos.x * 100000), floor(pos.y * 100000), floor(pos.z * 100000))
 	
 	var k = str(vec.x) + '_' + str(vec.y) + '_' + str(vec.z);
 	
@@ -58,7 +58,7 @@ func add_edge(ai: int, bi: int):
 	
 	if eIdx != null:
 		var edge = edges[eIdx]
-		
+
 		var he = halfEdges[edge.halfEdge]
 		
 		if he.twin != -1:
@@ -80,6 +80,7 @@ func add_edge(ai: int, bi: int):
 		return twin
 	
 	var he = HalfEdge.new(halfEdges.size())
+	he.twin = -1
 	var edge = Edge.new(ai, bi, edges.size(), he.idx)
 	
 	he.vertex = ai
@@ -90,9 +91,9 @@ func add_edge(ai: int, bi: int):
 	if vb.halfEdge == -1:
 		vb.halfEdge = he.idx
 	
-	edges.append(edge)
+	edges.push_back(edge)
 	
-	halfEdges.append(he)
+	halfEdges.push_back(he)
 
 	mapEdges[key] = edge.idx
 	
@@ -142,7 +143,7 @@ func add_triangle_verts(a, b, c):
 func add_face_from_half_edges(aryHe):
 	var face = Face.new(faces.size())
 	
-	faces.append(face)
+	faces.push_back(face)
 	
 	var he
 	var cnt = aryHe.size()
@@ -169,7 +170,7 @@ func add_tri_from_half_edges(ary_he):
 	var cnt = ary_he.size()
 	var prev_idx = ary_he[cnt - 1].idx
 	
-	for i in range(0, cnt - 1):
+	for i in range(0, cnt):
 		he = ary_he[i]
 		he.tri = tri.idx
 		he.triPrev = prev_idx
@@ -197,7 +198,8 @@ func _into_array(n):
 	var a = []
 	for i in range(n):
 		a.append(0)
-
+	return a
+	
 func flatten_vertices():
 	var rtn = _into_array(vertices.size() * 3)
 	

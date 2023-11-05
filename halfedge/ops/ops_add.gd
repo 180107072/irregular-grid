@@ -50,7 +50,7 @@ func add_subdivide_tri(top, a, b, c, div = 2):
 	var row1
 
 	var t
-	for i in range(0, div):
+	for i in range(1, div + 1):
 		t = i / div
 		seg_b = lerp(a, b, t)
 		seg_c = lerp(a, c, t)
@@ -59,13 +59,27 @@ func add_subdivide_tri(top, a, b, c, div = 2):
 		
 		for j in range(1, i):
 			t = j / i
-			
 			seg_a = lerp(seg_b, seg_c, t)
+			row1.push_back(top.add_vertex(seg_a))
 		
-		row1.append(top.add_vertex(seg_c))
+		row1.push_back(top.add_vertex(seg_c))
 		
 		for j in range(0, row0.size()):
 			top.add_triangle(row1[j], row1[j + 1], row0[j])
 			if j + 1 < row0.size():
 				top.add_triangle(row0[ j ], row1[ j+1 ], row0[ j+1 ] )
+
 		row0 = row1
+
+
+
+func add_tri_subdivide_face(top, a, b, c):
+	var ab = lerp(a, b, 0.5)
+	var bc = lerp(b, c, 0.5)
+	var ca = lerp(c, a, 0.5)
+	var cp = (a + b + c) / 3
+
+	add_quad_face(top, cp, ca, a, ab)
+	add_quad_face(top, cp, ab, b, bc)
+	add_quad_face(top, cp, bc, c, ca)
+	

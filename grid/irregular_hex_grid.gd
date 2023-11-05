@@ -1,7 +1,7 @@
 extends Node3D
 
 const Topology = preload("res://halfedge/topology.gd")
-const IrregularGrid = preload("res://grid/irregular_grid_main.gd")
+var IrregularGrid = preload("res://grid/irregular_grid_main.gd").new()
 var OPS_Tri = preload("res://halfedge/ops/op_tri.gd").new()
 var OPS_Add = preload("res://halfedge/ops/ops_add.gd").new()
 
@@ -20,9 +20,7 @@ func _debug_faces(grid):
 			
 
 func create():
-	var grid = build( 52, 32, 50, 0.4, 110, 0 )
-	var ir_grid = IrregularGrid.new().from_topology(grid, 1, 3)
-#	_debug_faces(grid)
+	var grid = build(10, 10, 30, 0.4, 110, 0)
 	
 	return grid
 
@@ -32,10 +30,15 @@ func build(radius = 3, div = 3, iter = 50, relaxScl = 0.1, _seed = 100, relax = 
 	_build_points(shape, radius, div)
 	_build_triangles(shape, radius, div)
 	_random_quad_merge(shape, _seed)
-	
+
 	var final = Topology.new()
-	
+
 	_face_subdivide(shape, final)
+
+	_prep_edge_verts(final)
+	
+	_relax_forces(final, iter, relaxScl)
+
 	
 	return final
 
@@ -55,6 +58,7 @@ func _build_points( top, radius, div ):
 	var xPnt
 	
 	for i in range(-d_min, d_min + 1.0):
+
 		iAbs   = float(abs(i));
 		pntCnt = d_max + -iAbs - 1.0;
 
@@ -67,11 +71,13 @@ func _build_points( top, radius, div ):
 			aPnt[0] *= sI;
 		bPnt     = Vector3(aPnt)
 		bPnt[2]  = -bPnt[2];
-		
+
 		top.add_vertex( aPnt );
 		for j in range(1, pntCnt):
 			xPnt = lerp(aPnt, bPnt, j/pntCnt );
+			
 			top.add_vertex( xPnt );
+
 		top.add_vertex( bPnt );
 
 func _build_triangles( top, radius, div ):
@@ -95,6 +101,7 @@ func _build_triangles( top, radius, div ):
 		bCnt   = d_max + -bAbs;
 		bIdx   = aIdx + aCnt
 		minCnt = min( aCnt, bCnt ) - 1;
+
 		for j in range(0, minCnt):
 			a = aIdx + j
 			b = a + 1;
@@ -128,28 +135,81 @@ func _into_array(n):
 
 func _random_quad_merge(top, seed = 100):
 	var edges = _into_array(top.edges.size())
-		
 	edges.shuffle()
 	var idx = edges.pop_back()
 		
 	while idx != null:
 		OPS_Tri.tri_quad_from_edge(top, idx)
 		idx = edges.pop_back()
-#
+
 	for he in top.halfEdges:
 		if he.face == -1:
 			OPS_Tri.tri_to_face(top, he.tri)
 
 func _face_subdivide(top, out):
-	var a
-	var b
-	var c 
-	var d
+
 	for f in top.faces:
-		match f.halfEdges.size():
-			4:
-				a = top.get_vert_pos( top.halfEdges[ f.halfEdges[0] ].vertex )
-				b = top.get_vert_pos( top.halfEdges[ f.halfEdges[1] ].vertex )
-				c = top.get_vert_pos( top.halfEdges[ f.halfEdges[2] ].vertex )
-				d = top.get_vert_pos( top.halfEdges[ f.halfEdges[3] ].vertex )
-				OPS_Add.add_quad_subdivide(out, a, b, c, d)
+		if f.halfEdges.size() == 4:
+			var a = top.get_vert_pos( top.halfEdges[ f.halfEdges[0] ].vertex )
+			var b = top.get_vert_pos( top.halfEdges[ f.halfEdges[1] ].vertex )
+			var c = top.get_vert_pos( top.halfEdges[ f.halfEdges[2] ].vertex )
+			var d = top.get_vert_pos( top.halfEdges[ f.halfEdges[3] ].vertex )
+			OPS_Add.add_quad_subdivide(out, a, b, c, d)
+		elif f.halfEdges.size() == 3:
+			var a = top.get_vert_pos( top.halfEdges[ f.halfEdges[0] ].vertex );
+			var b = top.get_vert_pos( top.halfEdges[ f.halfEdges[1] ].vertex );
+			var c = top.get_vert_pos( top.halfEdges[ f.halfEdges[2] ].vertex );
+			OPS_Add.add_tri_subdivide_face( out, a, b, c );
+
+func _prep_edge_verts(top):
+	for he in top.halfEdges:
+		if he.twin != -1:
+			continue
+
+		var edg = top.edges[he.edge]
+		top.vertices[ edg.aIdx ].userData = true;
+		top.vertices[ edg.bIdx ].userData = true;
+
+
+func _relax_forces(top, iter = 50, relax_scl = 0.1):
+	var centroid = Vector3.ZERO
+	var force = Vector3.ZERO
+	var v = Vector3.ZERO
+	
+	
+	var forces = _into_array(top.vertices.size())
+	
+	for i in range(0, forces.size()):
+		forces[i] = Vector3.ZERO
+	
+	for loop in range(0, iter):
+		
+		for f in top.faces:
+			
+			var pnts = f.get_vertices(top)
+			centroid = (pnts[0].pos + pnts[1].pos + pnts[2].pos + pnts[3].pos) / 4
+
+			for p in pnts:
+				if p.userData == null:
+					v = p.pos - centroid
+					force = force + v
+					force = Vector3(-force.z, force.y, force.x)
+				
+			force = force / 4
+			
+			for p in pnts:
+				if p.userData == null:
+					v = centroid + force
+					v = v - p.pos
+					forces[p.idx] = forces[p.idx] + v
+					force = Vector3(-force.z, force.y, force.x)
+					
+		for i in range(0, forces.size()):
+			if top.vertices[i].userData == null:
+				v = forces[i] * relax_scl
+				top.vertices[i].pos = top.vertices[ i ].pos + v
+		
+		if loop != iter - 1:
+			force = Vector3.ZERO
+			for i in range(0, forces.size()):
+				forces[i] = Vector3.ZERO

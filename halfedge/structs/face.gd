@@ -14,15 +14,16 @@ func _init(_idx = null):
 	
 func _into_array(n):
 	var a = []
-	for i in range(0, n - 1):
+	for i in range(0, n):
 		a.append(0)
 	return a
 
 func get_vertices(top, out = null):
 	if out == null:
 		out = _into_array(halfEdges.size())
+	var o = []
+	for i in range(0, halfEdges.size()):
+		o.push_back( top.vertices[ top.halfEdges[ halfEdges[ i ] ].vertex ])
+		
 	
-	for i in range(0, halfEdges.size() - 1):
-		out[i] = top.vertices[top.halfEdges[halfEdges[i]].vertex]
-	
-	return out
+	return o
