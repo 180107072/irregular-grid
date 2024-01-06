@@ -11,6 +11,10 @@ config_version=5
 [application]
 
 config/name="irregular-grid"
-run/main_scene="res://examples_dd3d/DebugDrawDemoScene.tscn"
-config/features=PackedStringArray("4.2", "Forward Plus")
+run/main_scene="res://resources/scenes/demo.tscn"
+config/features=PackedStringArray("4.1", "Forward Plus")
 config/icon="res://icon.svg"
+
+[rendering]
+
+renderer/rendering_method="mobile"

@@ -1,10 +1,4 @@
-extends Node3D
-
-
-func create():
-	var grid = build(10, 10, 30, 0.4)
-
-	return grid
+class_name  IrregularHexGrid
 
 
 func build(radius = 3, div = 3, iter = 50, relax_scl = 0.1):
@@ -24,75 +18,62 @@ func build(radius = 3, div = 3, iter = 50, relax_scl = 0.1):
 
 	_relax_forces(final, iter, relax_scl)
 
+	shape.dispose()
+
+	final.clear_maps()
+
 	return final
 
 
 func _build_points(top: Topology, radius: int, div: float):
 	var rad = -30 * PI / 180
-	var pCorner = Vector3(radius * cos(rad), 0, radius * sin(rad))
+	var p_corner = Vector3(radius * cos(rad), 0, radius * sin(rad))
 
-	var pTop = Vector3(0, 0, -radius)
+	var p_top = Vector3(0, 0, -radius)
 
 	var d_min = float(div) - 1.0
 	var d_max = float(div * 2.0) - 1.0
 
-	var iAbs
-	var pntCnt
-	var aPnt
-	var bPnt
-	var xPnt
+	var a_pnt; var b_pnt; var x_pnt
 
 	for i in range(-d_min, d_min + 1.0):
-		iAbs = float(abs(i))
-		pntCnt = d_max + -iAbs - 1.0
+		var i_abs = float(abs(i))
+		var points_count = d_max + -i_abs - 1.0
 
-		aPnt = lerp(pCorner, pTop, 1.0 - float(iAbs / d_min))
+		a_pnt = lerp(p_corner, p_top, 1.0 - float(i_abs / d_min))
 
-		var sI = sign(i)
-		if sI == 0:
-			aPnt[0] *= 1
-		else:
-			aPnt[0] *= sI
-		bPnt = Vector3(aPnt)
-		bPnt[2] = -bPnt[2]
+		a_pnt[0] *= 1 if sign(i) == 0 else sign(i)
 
-		top.add_vertex(aPnt)
-		for j in range(1, pntCnt):
-			xPnt = lerp(aPnt, bPnt, j / pntCnt)
+		b_pnt = Vector3(a_pnt)
+		b_pnt[2] = -b_pnt[2]
 
-			top.add_vertex(xPnt)
+		top.add_vertex(a_pnt)
 
-		top.add_vertex(bPnt)
+		for j in range(1, points_count):
+			x_pnt = lerp(a_pnt, b_pnt, j / points_count)
+
+			top.add_vertex(x_pnt)
+
+		top.add_vertex(b_pnt)
 
 
 func _build_triangles(top: Topology, div: int):
 	var d_min = div - 1
 	var d_max = div * 2 - 1
-	var aAbs
-	var bAbs
-	var aCnt
-	var bCnt
-	var minCnt
-	var aIdx = 0
-	var bIdx = 0
+	var a_abs; var b_abs; var a_cnt; var b_cnt; var min_cnt; var a_idx = 0; var b_idx = 0
 	
-	# todo convert this to 4d vector
-	var a
-	var b
-	var c
-	var d
+	var a; var b; var c; var d
 	for i in range(-d_min, d_min):
-		aAbs = abs(i)
-		bAbs = abs(i + 1)
-		aCnt = d_max + -aAbs
-		bCnt = d_max + -bAbs
-		bIdx = aIdx + aCnt
-		minCnt = min(aCnt, bCnt) - 1
+		a_abs = abs(i); b_abs = abs(i + 1)
+		a_cnt = d_max + -a_abs
+		b_cnt = d_max + -b_abs
+		b_idx = a_idx + a_cnt
+		min_cnt = min(a_cnt, b_cnt) - 1
 
-		for j in range(0, minCnt):
-			a = aIdx + j
+		for j in range(0, min_cnt):
+			a = a_idx + j
 			b = a + 1
-			d = bIdx + j
+			d = b_idx + j
 			c = d + 1
 			if i < 0:
 				top.add_triangle(a, b, c)
@@ -101,15 +82,15 @@ func _build_triangles(top: Topology, div: int):
 				top.add_triangle(a, b, d)
 				top.add_triangle(b, c, d)
 		if i < 0:
-			a = aIdx + aCnt - 1
-			b = a + bCnt
+			a = a_idx + a_cnt - 1
+			b = a + b_cnt
 			c = b - 1
 		else:
-			b = aIdx + aCnt - 1
+			b = a_idx + a_cnt - 1
 			a = b - 1
-			c = b + bCnt
+			c = b + b_cnt
 		top.add_triangle(a, b, c)
-		aIdx += aCnt
+		a_idx += a_cnt
 
 
 func _into_array(n):

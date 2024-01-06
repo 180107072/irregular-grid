@@ -1,19 +1,51 @@
 extends Node
 
-var grid = null
+class_name Debug
 
-func _init(_grid):
-	grid = _grid
 
-func debug_faces():
-	for f in grid.faces:
+func line(pos1: Vector3, pos2: Vector3, color = Color.WHITE_SMOKE):
+	var mesh_instance := MeshInstance3D.new()
+	var immediate_mesh := ImmediateMesh.new()
+	var material := ORMMaterial3D.new()
 
-		var edg = grid.half_edges[f.half_edges[0]]
-		var length = f.half_edges.size()
+	mesh_instance.mesh = immediate_mesh
+	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
-		for i in range(1, length + 1):
-			var ii = i % length
-			
-			var nex = grid.half_edges[f.half_edges[ii]]
-			DebugDraw3D.draw_line(grid.get_vert_pos( edg.vertex ), grid.get_vert_pos( nex.vertex ) , Color(255, 255, 255))
-			edg = nex
+	immediate_mesh.surface_begin(Mesh.PRIMITIVE_LINES, material)
+	immediate_mesh.surface_add_vertex(pos1)
+	immediate_mesh.surface_add_vertex(pos2)
+	immediate_mesh.surface_end()
+
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = color
+
+	#get_tree().get_root().add_child(mesh_instance)
+	# if persist_ms:
+	# 	await get_tree().create_timer(persist_ms).timeout
+	# 	mesh_instance.queue_free()
+	# else:
+	return mesh_instance
+
+
+func point(pos: Vector3, radius = 0.05, color = Color.WHITE_SMOKE, persist_ms = 0):
+	var mesh_instance := MeshInstance3D.new()
+	var sphere_mesh := SphereMesh.new()
+	var material := ORMMaterial3D.new()
+
+	mesh_instance.mesh = sphere_mesh
+	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mesh_instance.position = pos
+
+	sphere_mesh.radius = radius
+	sphere_mesh.height = radius * 2
+	sphere_mesh.material = material
+
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = color
+
+	get_tree().get_root().add_child(mesh_instance)
+	if persist_ms:
+		await get_tree().create_timer(persist_ms).timeout
+		mesh_instance.queue_free()
+	else:
+		return mesh_instance

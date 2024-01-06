@@ -1,12 +1,10 @@
 [gd_scene load_steps=2 format=3 uid="uid://dhtdx577qqj0c"]
 
-[ext_resource type="Script" path="res://grid/irregular_hex_grid.gd" id="1_r3ujm"]
+[ext_resource type="Script" path="res://scripts/demo.gd" id="1_151nd"]
 
 [node name="Node3D" type="Node3D"]
+script = ExtResource("1_151nd")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.893348, 0.449366, 0, -0.449366, 0.893348, 0, 0.397073, 1.55055)
+transform = Transform3D(1, 0, 0, 0, 0.554597, 0.832119, 0, -0.832119, 0.554597, 0, 16.3088, 14.9027)
 fov = 72.1477
-
-[node name="Node3D" type="Node3D" parent="."]
-script = ExtResource("1_r3ujm")
